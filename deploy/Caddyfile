@@ -1,0 +1,23 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 12MB
+	}
+
+	@metrics path /metrics
+	respond @metrics 404
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	reverse_proxy server:8080
+
+	log {
+		output stdout
+		format json
+	}
+}

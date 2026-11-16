@@ -1,0 +1,71 @@
+name: karaoke-studio
+
+services:
+  server:
+    build: ./server
+    image: ${SERVER_IMAGE:-karaoke-studio-server:latest}
+    restart: unless-stopped
+    env_file: ./deploy/.env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DB_PATH: /data/karaoke.db
+      RECORDINGS_DIR: /data/recordings
+      BACKUP_DIR: /data/backups
+      TRUST_PROXY: "true"
+    volumes:
+      - karaoke-data:/data
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    env_file: ./deploy/.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - server
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/metrics-token:/etc/prometheus/metrics-token:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+volumes:
+  karaoke-data:
+  caddy-data:
+  caddy-config:
+  prometheus-data:

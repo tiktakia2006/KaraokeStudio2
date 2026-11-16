@@ -1,0 +1,15 @@
+{
+  "name": "karaoke-studio-server",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.5.0" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch src/index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js",
+    "loadtest": "node --disable-warning=ExperimentalWarning tools/loadtest.js",
+    "profile": "node --disable-warning=ExperimentalWarning tools/profile.js",
+    "backup": "node --disable-warning=ExperimentalWarning tools/backup.js"
+  }
+}
